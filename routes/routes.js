@@ -2,7 +2,23 @@ const express = require("express");
 const passport = require("passport");
 const controller = require("../controller/controller");
 const router = express.Router();
-//register
+const path = require("path");
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
+
+const upload = multer({}); //register
 router.post("/signUp", controller.postSignUp);
 //login
 router.post(
@@ -18,7 +34,7 @@ router.get("/failure", controller.getFailure);
 //insert category
 router.post("/category", controller.postCategory);
 //insert product in category and product collections
-router.post("/postProducts", controller.postProducts);
+router.post("/postProducts", upload.single("image"), controller.postProducts);
 //get categories
 router.get("/categories", controller.getCategories);
 //get products by category id

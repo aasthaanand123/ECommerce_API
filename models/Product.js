@@ -8,5 +8,7 @@ const productSchema = new Schema({
   detailedDescription: String,
   availability: Number,
   category: { type: Schema.Types.ObjectId, ref: "categories" },
+  imageUrl: String,
+  isApproved: { type: Boolean, default: false },
 });
 module.exports = mongoose.model("products", productSchema);

@@ -5,6 +5,13 @@ const User = require("../models/User");
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const { ObjectId } = require("mongodb");
+const DatauriParser = require("datauri/parser");
+const cloudinary = require("cloudinary").v2;
+cloudinary.config({
+  cloud_name: "ddnofir7e",
+  api_key: "323412712195694",
+  api_secret: "ytSxbyM1v3JFk4K8Y8l4H_L_mBA",
+});
 module.exports.postSignUp = async (req, res) => {
   try {
     let { username, password } = req.body;
@@ -54,44 +61,55 @@ module.exports.postCategory = async (req, res) => {
   }
 };
 module.exports.postProducts = async (req, res) => {
-  try {
-    if (req.user.username == "admin123" && req.user.password == "321") {
-      let {
-        title,
-        price,
-        description,
-        detailedDescription,
-        availability,
-        category,
-      } = req.body;
-      let product = {
-        title,
-        price,
-        description,
-        detailedDescription,
-        availability,
-        category,
-      };
-      //create product
-      let createdentry = await Product.create(product);
-      //add in category
-      //find category document
-      console.log(category);
-      let categoryM = await Category.find({ _id: new ObjectId(category) });
-      let productcategoryM = categoryM[0].products;
-      productcategoryM.push(createdentry._id);
-      //update category
-      await Category.updateOne(
-        { _id: category },
-        { products: productcategoryM }
-      );
-      res.send("successful");
-    } else {
-      res.send("not authorized to add products");
+  console.log(req.file);
+  let {
+    title,
+    price,
+    description,
+    detailedDescription,
+    availability,
+    category,
+  } = req.body;
+
+  const parser = new DatauriParser();
+
+  cloudinary.uploader.upload(
+    parser.format(".png", req.file.buffer).content,
+    async (error, result) => {
+      try {
+        if (req.user.username == "admin123" && req.user.password == "321") {
+          let product = {
+            title,
+            price,
+            description,
+            detailedDescription,
+            availability,
+            category,
+            imageUrl: result.url,
+          };
+          let createdentry = await Product.create(product);
+          //add in category
+          //find category document
+          // console.log(category);
+          let categoryM = await Category.find({ _id: new ObjectId(category) });
+          let productcategoryM = categoryM[0].products;
+          productcategoryM.push(createdentry._id);
+          //update category
+          await Category.updateOne(
+            { _id: category },
+            { products: productcategoryM }
+          );
+          res.send("successful");
+        }
+        //create product
+        else {
+          res.send("not authorized to add products");
+        }
+      } catch (err) {
+        console.log(err);
+      }
     }
-  } catch (err) {
-    console.log(err);
-  }
+  );
 };
 module.exports.getCategories = async (req, res) => {
   try {
